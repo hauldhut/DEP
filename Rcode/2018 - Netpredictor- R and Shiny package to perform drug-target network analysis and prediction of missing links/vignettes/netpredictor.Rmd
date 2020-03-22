@@ -1,0 +1,402 @@
+---
+title: "NetPredictor"
+author: "Abhik Seal"
+date: "`r Sys.Date()`"
+output:
+  rmarkdown::pdf_document:
+      fig_caption: yes
+vignette: >
+  %\VignetteIndexEntry{netpredictor tutorial}
+  %\VignetteEngine{knitr::knitr}
+  %\usepackage[utf8]{inputenc}
+---
+
+## Table of Contents
+
+[1. Introduction](#introduction)
+
+[2. Installation](#installation)
+
+[3. Examples](#examples)
+
+[4. Citations](#citations)
+
+_______
+
+## 1. Introduction
+Social and biological systems can be represented by graphs where nodes represent individuals,biological experiments(protein,genes,etc.) web users and so on. Networks allows methods of graph theory to be applied to the task of predicting links. Link prediction predicts missing links in networks or links in future networks, it is also important for mining and analyzing the evolution of networks. Link prediction problem is a long-standing challenge in modern information science, and a lot of algorithms based on Markov chains and statistical models have been proposed by computer science community. The link prediction problem is usually defined in unipartite graphs. The netpredictor package is developed to solve the problem of bipartite link prediction using Random walk with restart(RWR) and network based inference methods(NBI). We plan to integrate varierty of other algorithms in near future. All of the code is developed in R which also provides parallel execution modes. 
+
+Consider an undirected, unweighted network $G = (V, E)$, where V is the set of nodes and E is the set of links. For each pair of nodes  \{$a$,$b$} $\in$ V  we can assign a proximity score by executing the random walk procedure as follows : 
+
+- we start a random walker from a. 
+- At each time step, with the probability $1-c$, the walker walks to one of the neighbors, $b$, according to the transition probability matrix  $W_{ab} = \frac{S_{ab}}{T}$  where $S_{ab}$ is the adjacency matrix of the network and ($S_{ab}$ equals 1 if node a and b are connected, 0 otherwise) $K_{a}$  denotes the degree of a.
+- With the probability c, the walker goes back to a. 
+- After many time steps the probability of finding the random walker at node x converges to the steady-state probability, which is our proximity score $S_{a \rightarrow x}$.
+
+One of the most widely used ways to solve random walk w1ith restart is the matrix iteration method, iterating the equation (1) until convergence, i.e, until the L2 norm of successive estimates of below our threshold T $10 ^ {-7}$.
+\begin{equation}
+\begin{aligned}
+P_{t+1} = ( 1 - c ) W^{T} P_{t} + cP_{0}
+\end{aligned}
+\end{equation}
+
+_______
+
+## 2. Installation
+
+A stable tested version of from github using the devtools package: 
+
+Installing from github
+
+     install.packages("devtools")
+     library(devtools)
+     install_github("abhik1368/netpredicter")     
+
+_______
+
+## 3. Examples
+Here at first we look at the properties which can be calculated on unipartite graphs.
+
+```{r, eval=FALSE,results='asis'}
+
+require(igraph)
+require(netpredictor)
+g1 <- upgrade_graph(erdos.renyi.game(100, 1/100))
+V(g1)$name <- seq(1,100,1)
+score_mat <- unetSim(g1,"aa")
+head(which(score_mat!=0, arr.ind = T))
+
+## Common neighbors vertex similarity
+score_mat <- unetSim(g1,"cn")
+head(which(score_mat!=0, arr.ind = T))
+
+## Jaccard Index similarity
+
+score_mat <- unetSim(g1,"jc")
+
+## Dice similarity
+
+score_mat <- unetSim(g1,"dice")
+
+## Katz Index similarity
+
+score_mat <- unetSim(g1,"katz")
+
+## Geodesic distance vertex similarity
+
+score_mat <- unetSim(g1,"dist")
+
+## Cosine vertex similarity/ Salton index
+
+score_mat <- unetSim(g1,"cosine")
+
+## Preferential attachment vertex similarity
+
+score_mat <- unetSim(g1,"pa")
+
+## Local Paths Index
+## This function counts the number of two-paths and three-paths between nodes.
+
+score_lpsim <- unetSim(g1,"lp")
+
+## Hub promoted Index
+## This measures assigns higher scores to links adjacent to hubs (high degree nodes). It 
+## counts common neighbors of two vertices and weigths the result.
+
+score_hpsim <- unetSim(g1,"hpi")
+
+## Similarity measure based on resource allocation process (number of common neighbours 
+## weighted by the inverse of their degrees)
+score_hpsim <- unetSim(g1,"ra")
+```
+
+
+Next we look at the properties which can be calculated on Bipartite graphs.
+
+```{r, eval=FALSE,results='asis'}
+
+suppressPackageStartupMessages(library(igraph))
+suppressPackageStartupMessages(library(netpredictor))
+## dataset enzyme is provide in netpredictor package
+data(Enzyme)
+
+## Get the Enzyme and compound adjacency matrix
+A <- t(enzyme_ADJ)
+
+## degree Centrality of the Bipartite Graph
+get.biDegreeCentrality(A,SM=FALSE)
+
+## Compute Graph density of Bipartite Graph
+get.biDensity(A)
+
+## Compute betweeness centrality of Bipartite Graph
+get.biBetweenessCentrality(A)
+
+## Projects Bipartite Networks into monopartite networks default method is shared 
+## neighbours.
+#get.biWeightedProjection(A,weight = TRUE)
+get.biWeightedProjection(A)
+
+```
+
+Next we will use the different methods to predict links. Here we have shown examples based on drug target prediction. With the growing understanding of complex diseases, the focus of drug discovery has shifted away from "one target, one drug" model, to a new "multi-target, multi-drug" model. Predicting potential drug-target interactions from heterogeneous biological data is critical not only for better understanding of the various interactions and biological processes, but also for the development of novel drugs and the improvement of human medicines. To predict polypharmacology people use bayesian methods, SVM and Random Forest models, but in all of those algorithms the methods depends on labelled data to predict unknown links. Network based approaches does not rely on labelled data . Two of the algorihtms implemented in this package Random walk based Restart(RWR) and Network based Inference(NBI) to do it. For performing RWR we used Drug target network which is a bipartite graph in which every links connects drugs to proteins. 
+
+```{r, eval= TRUE,results='hide' ,messages=FALSE}
+suppressPackageStartupMessages(require(igraph))
+suppressPackageStartupMessages(require(netpredictor))
+
+## We use the enzyme data provided in the netpredictor package. The example
+# below shows how to perform random walk with restart
+
+data(Enzyme)
+## load the adjacency matrix 
+A <- enzyme_ADJ 
+
+## load the chemical similarity matrix calculated from other packages or softwares
+S2 = enzyme_Csim 
+
+## load the protein similarity matrix
+
+S1 = enzyme_Gsim
+
+## Convert the adjacency matrix to igraph object because biNetwalk function used igraph object
+g1 = graph.incidence(A)
+
+## Run the RWR in bipartite network.
+pScore <- biNetwalk(g1,s1=as.matrix(S1),s2=as.matrix(S2),normalise="laplace", dataSeed=NULL,restart=0.8,verbose=T)
+
+
+dim(pScore)
+```
+
+In this example we attempt to use the dataseed file which contains the pairs relations between targets and drugs. This can be useful when one is trying to investigate relations for a specific set of relations . The Drug names and proteins names should be included in the adjacency matrix when one uses the file option to provide dataseed. In the dataseed file the first column contains the proteins names and the second column the drug names. Ouput is a matrix of unique drugs against the number of targets in the adjacency matrix. 
+
+
+```{r, eval= TRUE,results='hide' ,messages=FALSE}
+
+suppressPackageStartupMessages(require(igraph))
+library(netpredictor)
+data(Enzyme)
+
+A <- t(enzyme_ADJ)
+g1 <- upgrade_graph(graph.incidence(A,mode = 'all')) 
+S1 = enzyme_Csim 
+S2 = enzyme_Gsim
+## Read the dataseed file from the user 
+dataF<- read.csv("seedFile.csv",header=FALSE)
+knitr::kable(dataF)
+Mat <- biNetwalk(g1,s1=S1,s2=S2,normalise="laplace", dataSeed =dataF,
+                 restart=0.8, verbose=T)
+```
+
+In this next example we will see how we can plot the significant communities of drugs from the final RWR computed matrix. For community detection we used the walktrap algorithm [13], which places nodes into communities based on neighborhood similarity from short random walks.  We also input a list of drugs as vector and retrieve top 10 interactions for each of those drugs. In this package after getting the results one can easily write the results in GML format for visualization in Gephi or cytoscape. It also support export to GEXF format (Gephi specific file format) . Below shows the example of exporting to GML format.
+
+```{r, eval= TRUE,results='hide' ,messages=FALSE,warning=FALSE}
+
+suppressPackageStartupMessages(require(igraph))
+suppressPackageStartupMessages(require(netpredictor))
+
+A <- enzyme_ADJ 
+S1 = enzyme_Gsim
+S2 = enzyme_Csim
+g1 = graph.incidence(A)
+Q = biNetwalk(g1,s1=S1,s2=S2,normalise="laplace",dataSeed=NULL,restart=0.8,
+              verbose=T)
+
+## Get the top results of RWR prediction. This function returns the associations     
+## of drugs and target names with scores and type interaction whether
+## True / predicted interactions.
+
+knitr::kable(head(getTopresults(A,Q,top=10,druglist=NULL)))
+
+## Get top results of RWR prediction using a list of drug names. One should be careful using 
+## a drug list it should contain drug names which are in the adjacency matrix.     
+
+drugs = c("D00014","D00018", "D00029", "D00036","D00045","D00049")
+result <- getTopresults(A,Q,top=10,druglist=drugs)
+
+## Get the results
+head(result)
+
+## Save the top results in GML format for visualization in Gephi.
+g<-graph.data.frame(result[,1:2],directed=FALSE)
+
+## Set the edge values
+g <- set.edge.attribute(g, "weight", value=result[,3])
+saveGML(g,"netresult.gml","netresult")
+
+## Get the significance graph 
+Z = sig.net(data=A,g=g1,Amatrix=Q,num.permutation=100,adjp.cutoff=0.01,
+            p.adjust.method="BH",parallel=FALSE)
+
+## Get the graph for plotting commnuties
+g <- Z$cgraph
+
+gp <- get.Communities(g)
+
+## Get members from the first community
+print(gp[[1]]$community)
+
+## Total number of communities
+length(gp)
+
+## Plot the communities with 5 columns
+plot_Community(gp,cols=5)
+
+```
+
+One can use net.perf(), it samples and removes links from the adjacency matrix and predicts them and calculates area under accumulation curve, AUC, BEDROC (bdr), and Enrichment factor (EF). The area under the receiver operating characteristic (ROC) curve (AUC) is widely used metric for evaluation of predictive models. The advantage of using AUC is that it is bounded, between 0 to 1 with 0.5 corresponding to random prediction. But AUC method has been critized in cheminformatics based virtual screening methods because it is not sensitive to early recognition compounds . The EF tries to solve early recognition problem but it is dependent on the ratio of actives to inactives and the choice of subset X (fraction of active and inactive set) . To try and overcome these limitations numerous other evaluation methods, such as robust initial enhancement (RIE) [10] and Boltzmann-enhanced discrimination of ROC (BEDROC) have been proposed[11]. Sheridan et al. developed an exponential weighted scoring scheme RIE which gives heavier weight in “early recognized” hits. The BEDROC is constructed on top of RIE by, in essence, forcing the RIE to be bounded by 0 and 1, avoiding the dependence on the active/inactive ratio. In the example below we remove 50 links and repredict those links. While repredicting  them we calculate performance metrics like AUC,bedroc and enrichment factor. As the number of links (relinks) increases the performance of prediction drops. 'Calgo' option uses different algorithms like "nbi" , "rwr" and "netcombo" . 
+
+```{r, eval= TRUE,results='asis' ,messages=TRUE,warning=FALSE}
+data(Enzyme)
+A = enzyme_ADJ 
+S1 = enzyme_Gsim 
+S2= enzyme_Csim
+
+## We want to remove the links from the links which has two or more interactions.
+m = net.perf(A,S1,S2,alpha=0.5,lamda=0.5,relinks = 50,numT=2,Calgo="nbi")
+m
+
+```
+
+In 2010 Zhou et al., proposed a recommendation method based
+on the bipartite network projection technique implementing the concept of
+resources transfer within the network. The method developed here is from the article DT-Hybrid where they integrated the similarity matrices of drugs and proteins in order to make the prediction with the heatS equation [12]. The example given below one can use both the methods of either using similarity matrices and also simply using heatS equation with the adjacency matrix. 
+
+```{r, eval= TRUE,results='asis' ,messages=TRUE,warning=FALSE}
+
+data(Enzyme)
+A <- t(enzyme_ADJ) 
+S1 = as.matrix(enzyme_Csim) 
+S2 = as.matrix(enzyme_Gsim)
+g1 = graph.incidence(A)
+## Using the similarity matrices 
+P1 <- nbiNet(A,alpha=0.5, lamda=0.5,  s1=S1, s2=S2,format = "matrix")
+## Get the significance graph 
+Z = sig.net(data=A,g=g1,Amatrix=P1,num.permutation=100,adjp.cutoff=0.01,
+            p.adjust.method="BH",parallel=FALSE)
+
+## Get the graph for plotting commnuties
+g <- Z$cgraph
+
+gp <- get.Communities(g)
+
+## Get members from the first community
+print(gp[[1]]$community)
+
+## Total number of communities
+length(gp)
+
+## Plot the communities with 5 columns
+plot_Community(gp,cols=3)
+
+## Using the heatS equation with the adjacency matrix.
+P2 <- nbiNet(A,alpha=0.5,lamda=0.5,format="matrix")
+
+```
+
+We also give users to compute performance metrics using different algorithms to get AUCC, AUC, auctop,bdr and efc so that one can compare the performance using different algorithms.
+
+
+```{r, eval= TRUE,results='asis' ,messages=TRUE,warning=FALSE}
+
+library(netpredictor)
+library(igraph)
+data(Enzyme)
+A <- t(enzyme_ADJ)
+S1 = as.matrix(enzyme_Csim)
+S2 = as.matrix(enzyme_Gsim)
+## Use all the algorithms NBI, RWR and netcombo
+m = net.perf(A,S1,S2,relinks = 50,numT=2,Calgo="all")
+tab <- rbind(data.frame(m[[1]]),data.frame(m[[2]]),data.frame(m[[3]]))
+knitr::kable(tab)
+
+```
+
+Above table shows the performance of different algorithms. Next we will look after how do we calculate a significant interaction using network based inference algorithm. We compute the association score between drug a target and we want to found out whether the predicted association score is significant or not . We make 1000 permutations of the association matrix and similarity matrix and compute NBI scores for 1000 random matrices and then we used a normal distribution to calculate p-value . We convert the original compute score to an associated Z-score. Once the Z-score is found the probability that the value could be less the Z-score is found using the pnorm command. Also for a two sided test we need to multiply the result by two. Below gives a idea how we can acheive this . We can create a significant network based on these significant associations found.
+
+```{r, eval= FALSE,results='asis' ,messages=TRUE,warning=FALSE}
+
+## Load the data 
+data(Enzyme)
+A <- t(enzyme_ADJ) 
+S1 = as.matrix(enzyme_Csim) 
+S2 = as.matrix(enzyme_Gsim)
+#g1 = graph.incidence(A)
+
+
+## Compute NBI 
+P1 <- nbiNet(A,alpha=0.5, lamda=0.5,  s1=S1, s2=S2,format = "matrix")
+
+## Create a list where to store the matrices
+perm = list()
+
+## Set a random seed
+set.seed(12345)
+
+## Compute scores for 1000 permutations where you sample the matrix everytime
+for ( i in 1:10){
+    A <- t(enzyme_ADJ)
+    A <- A[sample(nrow(A)),sample(ncol(A))]
+    S1 = as.matrix(enzyme_Csim) 
+    S2 = as.matrix(enzyme_Gsim)
+    S1 <- S1[sample(nrow(S1)),sample(ncol(S1))]
+    S2 <- S2[sample(nrow(S2)),sample(ncol(S2))]
+    R1 <- nbiNet(A,alpha=0.5, lamda=0.5,  s1=S1, s2=S2,format = "matrix")
+    perm[[i]] <- R1
+}
+extractUC <- function(x.1,x.2,...){
+    x.1p <- do.call("paste", x.1)
+    x.2p <- do.call("paste", x.2)
+    x.1[! x.1p %in% x.2p, ]
+}
+## Get the mean and standard deviation of the matrix
+
+mean_mat <- apply(simplify2array(perm), 1:2, mean)
+sd_mat  <-  apply(simplify2array(perm), 1:2, sd)
+
+## Comput the Z-score of matrix
+Z <- (P1 - mean_mat)/sd_mat
+Z[is.nan(Z)] = 0
+## Compute the significance score
+sigNetwork <- 2*(pnorm(-abs(Z)))
+
+## Get the significant interactions where, P < 0.05
+sigNetwork[sigNetwork <  0.05] <- 1
+sigNetwork[sigNetwork != 1] <- 0
+
+sum(A) ## Total number of interactions we had earlier
+#[1] 1515
+
+sum(sigNetwork) ## Total number of interactions after computation.
+#[1] 2368
+
+```
+_______
+
+## 5. Citations
+
+[1] Kohler S, et al. Walking the Interactome for Prioritization of Candidate Disease Genes. American Journal of Human Genetics. 2008;82:949 – 958.
+
+[2] Can, T., Camoglu, O., and Singh, A.K. (2005). Analysis of protein-protein interaction networks using random walks. In BIOKDD '05: Proceedings of the 5th international workshop on Bioinformatics (New York, USA: Association for Computing Machinery). 61–68
+
+[3] Cheng F, et al. Prediction of drug-target interactions and drug repositioning via network-based inference. PLoS Comput. Biol. 2012;8:e1002503.
+
+[4] Zhou T, et al. Solving the apparent diversity-accuracy dilemma of recommender systems. Proc. Natl Acad. Sci. USA 2010;107:4511-4515.
+
+[5] Zhou T, et al. Bipartite network projection and personal recommendation. Phys. Rev. E Stat. Nonlin. Soft Matter Phys. 2007;76:046115.
+
+[6] http://data2quest.blogspot.com/2015/02/link-prediction-using-network-based.html
+
+[7] Vanunu O, Sharan R. Proceedings of the German Conference on Bioinformatics. Germany: GI; 2008. A propagation-based algorithm for inferring gene-disease assocations; pp. 54–63.
+
+[8] Chen X, et al. Drug–target interaction prediction by random walk on the heterogeneous network. Mol. BioSyst 2012;8:1970-1978
+
+[9] Seal  A, Ahn  Y, Wild  DJ . Optimizing drug target interaction prediction based on random walk on heterogeneous networks Journal of Cheminformatics 2015, 7:40.
+
+[10] Truchon et al. Evaluating Virtual Screening Methods: Good and Bad Metrics for the "Early Recognition" Problem. J. Chem. Inf. Model. (2007) 47, 488-508.
+
+[11] Sheridan RP et al. Protocols for bridging the peptide to nonpeptide gap in topological similarity searches. J. Chem. Inf. Comput. Sci. (2001) 41, 1395-1406.
+
+[12] Alaimo S, Pulvirenti A, Giugno R, Ferro A: Drug-target interaction prediction through domain-tuned network-based inference. Bioinformatics 2013, 29(16):2004-2008.  
+

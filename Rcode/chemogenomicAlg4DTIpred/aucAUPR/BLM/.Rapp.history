@@ -1,0 +1,233 @@
+install.packages("TANDEM")
+library("TANDEM")
+x = example_data$x
+x
+y = example_data$y
+y
+upstream = example_data$upstream
+upstream
+data_types = example_data$data_types
+data_types
+fit = tandem(x, y, upstream, alpha=0.5)
+fit
+contr = relative.contributions(fit, x, data_types)
+contr
+barplot(contr, ylab="Relative contribution", ylim=0:1)
+set.seed(1)
+n = nrow(x)
+nfolds = 10
+foldid = ceiling(sample(1:n)/n * nfolds)
+fit = tandem(x, y, upstream, alpha=0.5)
+library(glmnet)
+fit2 = cv.glmnet(x, y, alpha=0.5, foldid=foldid)
+contr_tandem = relative.contributions(fit, x, data_types)
+contr_tandem
+contr_glmnet = relative.contributions(fit2, x, data_types)
+contr_glmnet
+par(mfrow=c(1,2))
+barplot(contr_tandem, ylab="Relative contribution", main="TANDEM", ylim=0:1)
+barplot(contr_glmnet, ylab="Relative contribution", main="Classic approach", ylim=0:1)
+par(mfrow=c(1,1))
+par(mfrow=c(1,2))barplot(contr_tandem, ylab="Relative contribution", main="TANDEM", ylim=0:1)barplot(contr_glmnet, ylab="Relative contribution", main="Classic approach", ylim=0:1)par(mfrow=c(1,1))
+beta = coef(fit)
+beta
+y_hat = predict(fit, newx=x)
+y_hat
+set.seed(1)cv_tandem = nested.cv(x, y, upstream, method="tandem", alpha=0.5)
+set.seed(1)cv_glmnet = nested.cv(x, y, upstream, method="glmnet", alpha=0.5)
+barplot(c(cv_tandem$mse, cv_glmnet$mse), ylab="MSE", names=c("TANDEM", "Classic approach"))
+install.packages("rstan")
+Rserve()
+install.packages("Rserve")
+library("Rserve")
+source("http://bioconductor.org/biocLite.R")#
+	biocLite("affy")
+install.packages(file.choose())
+library(KEADrugResponse)
+library(affy)
+install.packages("SHOGUN")
+available.packages()
+install.packages("EasyMKL")
+install.packages("easymkl")
+library("SNFTool")
+library(SNFTool)
+install.packages("SNFTool")
+install.packages("SNFtool")
+K=20
+alpha=0.5
+T=10
+data(Data1)
+library("SNPtool")
+library("SNFtool")
+K=20
+alpha=0.5
+T=10
+data(Data1)
+data(Data2)
+Data1
+Data2
+truelabel=c(matrix(1,100,1), matrix(2,100,1))
+truelabel
+Dist1=dist2(as.matrix(Data1),as.matrix(Data1))
+Dist2=dist2(as.matrix(Data2),as.matrix(Data2))
+Dist1
+Dist2
+W1=affinityMatrix(Dist1, K, alpha)
+W1
+W2=affinityMatrix(Dist2, K, alpha)
+displayClusters(W1,truelabel)
+displayClusters(W2,truelabel)
+W=SNF(list(W1,W2),K,T)
+C=2
+group=spectralClustering(W,C)
+displayClusters(W,group)
+SNFNMI = calNMI(group, truelabel)
+SNFNMI
+ConcordanceMatrix = concordanceNetworkNMI(list(W, W1, W2))
+load(Digits.RData)
+load("Digits.RData")
+ConcordanceMatrix = concordanceNetworkNMI(list(W, W1, W2), C)
+ConcordanceMatrix
+load("Digits.RData")
+library("iCLuster")
+library("iCLusterPlus")
+source("https://bioconductor.org/biocLite.R")
+biocLite("iClusterPlus")
+library(iClusterPlus)
+library(GenomicRanges)
+install.packages(GenomicRanges)
+source("https://bioconductor.org/biocLite.R")#
+biocLite("GenomicRanges")
+library(GenomicRanges)
+install.packages(GenomeInforDb)
+install.packages("GenomeInforDb")
+library(GenomicRanges)
+library("GenomeInforDb")
+source("https://bioconductor.org/biocLite.R")#
+biocLite("GenomeInforDb")
+source("https://bioconductor.org/biocLite.R")#
+biocLite("GenomeInfoDb")
+library("GenomeInforDb")
+install.package("GenomeInforDb")
+install.packages("GenomeInforDb")
+install.packages()
+install.packages(file.chooser())
+file.chooser()
+library("GenomeInforDb")
+library("GenomeInfoDb")
+library("GenomicRanges")
+library(gplots)
+library("gplots")
+install.package("gplots")
+install.packages("gplots")
+library(lattice)
+library(gplots)
+data(gbm)
+dim(gbm.mut)
+mut.rate=apply(gbm.mut,2,mean)
+mut.rate
+gbm.mut2 = gbm.mut[,which(mut.rate>0.02)]
+gbm.mut2[1:10,1:8]
+dim(gbm.exp)
+gbm.exp[1:3,1:8]
+dim(gbm.seg)
+gbm.seg[1:3,]
+data(variation.hg18.v10.nov.2010)
+gbm.cn=CNregions(seg=gbm.seg,epsilon=0,adaptive=FALSE,rmCNV=TRUE,+ cnv=variation.hg18.v10.nov.2010[,3:5],+ frac.overlap=0.5, rmSmallseg=TRUE,nProbes=5)
+gbm.cn=CNregions(seg=gbm.seg,epsilon=0,adaptive=FALSE,rmCNV=TRUE, cnv=variation.hg18.v10.nov.2010[,3:5],frac.overlap=0.5, rmSmallseg=TRUE,nProbes=5)
+dim(gbm.cn)
+gbm.cn[1:3,1:5]
+gbm.cn=gbm.cn[order(rownames(gbm.cn)),]
+all(rownames(gbm.cn)==rownames(gbm.exp))
+all(rownames(gbm.cn)==rownames(gbm.mut2))
+fit.single=iClusterPlus(dt1=gbm.mut2,dt2=gbm.cn,dt3=gbm.exp,type=c("binomial","gaussian","gaussian"),lambda=c(0.04,0.61,0.90),K=2,maxiter=10)
+fit.single
+set.seed(123)
+date()
+for(k in 1:5){+ cv.fit = tune.iClusterPlus(cpus=12,dt1=gbm.mut2,dt2=gbm.cn,dt3=gbm.exp,+ type=c("binomial","gaussian","gaussian"),K=k,n.lambda=185,+ scale.lambda=c(1,1,1),maxiter=20)+ save(cv.fit, file=paste("cv.fit.k",k,".Rdata",sep=""))+ }
+for(k in 1:5){cv.fit = tune.iClusterPlus(cpus=12,dt1=gbm.mut2,dt2=gbm.cn,dt3=gbm.exp,type=c("binomial","gaussian","gaussian"),K=k,n.lambda=185,scale.lambda=c(1,1,1),maxiter=20)save(cv.fit, file=paste("cv.fit.k",k,".Rdata",sep=""))}
+install.packages("InfiniumPurify")
+library("InfiniumPurify")
+data(abbr)
+CancerTypeAbbr
+CancerTypeAbbr()
+data(beta.emp)
+normal.data<-beta.emp[,1:21]
+tumor.data<-beta.emp[,22:61]
+purity<-getPurity(tumor.data=tumor.data[,1], normal.data=NULL, tumor.type="LUAD")
+purity
+purity<-getPurity(tumor.data=tumor.data[,1:10], normal.data=NULL, tumor.type="LUAD")
+purity
+purity<-getPurity(tumor.data=tumor.data[,1:40], normal.data=NULL, tumor.type="LUAD")
+purity
+data(beta.emp)
+purity<-getPurity(tumor.data=tumor.data, tumor.type="LUAD")
+purity
+out<-InfiniumClust(tumor.data,purity,K=3,maxiter=5,tol=0.001)
+out
+DMC<-InfiniumDMC(tumor.data=tumor.data, normal.data=normal.data, purity=purity)
+DMC
+DMC_ctlFree = InfiniumDMC(tumor.data=tumor.data,purity=purity)
+DMC_ctlFree
+tumor.data<-beta.emp[,22:61]
+purity<-getPurity(tumor.data=tumor.data,normal.data=NULL, tumor.type="LUAD")
+purity
+tumor.purified=InfiniumPurify(tumor.data=tumor.data[1:100,],normal.data=normal.data[1:100,],purity=purity)
+tumor.purified
+install.packages("mixOmics")
+library(mixOmics)
+data(srbct)
+install.packages("mixOmics")
+library(mixOmics)
+ver()
+version()
+v()
+source("https://bioconductor.org/biocLite.R")
+biocLite("CancerSubtypes")
+source("https://bioconductor.org/biocLite.R")
+biocLite("RCytoscape")
+version
+install.packages('cgdsr')
+library("cgdsr")
+mycgds = CGDS("http://www.cbioportal.org/public-portal/")
+test(mycgds)
+getCancerStudies(mycgds)
+mycancerstudy = getCancerStudies(mycgds)[2,1]
+mycancerstudy
+mycancerstudy = getCancerStudies(mycgds)[4,1]
+mycancerstudy
+mycancerstudy = getCancerStudies(mycgds)[2,1]
+mycaselist = getCaseLists(mycgds,mycancerstudy)[1,1]
+mycaselist
+mygeneticprofile = getGeneticProfiles(mycgds,mycancerstudy)[4,1]
+mygeneticprofile
+myclinicaldata = getClinicalData(mycgds,mycaselist)
+myclinicaldata
+help('cgdsr')
+help('CGDS')
+version
+source("/Users/admin/Tools/DTI/chemogenomicAlg4DTIpred-master/BLM/demo_blm.R")
+source("/Users/admin/Tools/DTI/chemogenomicAlg4DTIpred-master/BLM/demo_blm.R")
+source("/Users/admin/Tools/DTI/chemogenomicAlg4DTIpred-master/aucAUPR/BLM/demo_blm.R")
+source("/Users/admin/Tools/DTI/chemogenomicAlg4DTIpred-master/aucAUPR/BLM/demo_blm.R")
+source("/Users/admin/Tools/DTI/chemogenomicAlg4DTIpred-master/aucAUPR/BLM/demo_blm.R")
+source("/Users/admin/Tools/DTI/chemogenomicAlg4DTIpred-master/aucAUPR/BLM/demo_blm.R")
+source("/Users/admin/Tools/DTI/chemogenomicAlg4DTIpred-master/aucAUPR/BLM/demo_blm.R")
+source("/Users/admin/Tools/DTI/chemogenomicAlg4DTIpred-master/aucAUPR/BLM/demo_blm.R")
+source("/Users/admin/Tools/DTI/chemogenomicAlg4DTIpred-master/aucAUPR/BLM/demo_blm.R")
+source("/Users/admin/Tools/DTI/chemogenomicAlg4DTIpred-master/aucAUPR/BLM/demo_blm.R")
+source("/Users/admin/Tools/DTI/chemogenomicAlg4DTIpred-master/aucAUPR/BLM/demo_blm.R")
+source("/Users/admin/Tools/DTI/chemogenomicAlg4DTIpred-master/aucAUPR/BLM/demo_blm.R")
+source("/Users/admin/Tools/DTI/chemogenomicAlg4DTIpred-master/aucAUPR/BLM/demo_blm.R")
+source("/Users/admin/Tools/DTI/chemogenomicAlg4DTIpred-master/aucAUPR/BLM/demo_blm.R")
+source("/Users/admin/Tools/DTI/chemogenomicAlg4DTIpred-master/aucAUPR/BLM/demo_blm.R")
+source("/Users/admin/Tools/DTI/chemogenomicAlg4DTIpred-master/aucAUPR/BLM/demo_blm.R")
+source("/Users/admin/Tools/DTI/chemogenomicAlg4DTIpred-master/aucAUPR/BLM/demo_blm.R")
+r<-rep(0,4)
+dim(r)
+size(r)
+sizeof(r)
+source("/Users/admin/Tools/DTI/chemogenomicAlg4DTIpred-master/aucAUPR/BLM/demo_blm.R")
+# generate a synthetic dataset with known classesn <- 50; counts <- c(5, 5, 8);V <- syntheticNMF(n, counts)# perform a 3-rank NMF using the default algorithmres <- nmf(V, 3)basismap(res)coefmap(res)
+library("NMF")
+# generate a synthetic dataset with known classesn <- 50; counts <- c(5, 5, 8);V <- syntheticNMF(n, counts)# perform a 3-rank NMF using the default algorithmres <- nmf(V, 3)basismap(res)coefmap(res)

@@ -1,0 +1,18 @@
+TY  - JOUR
+T1  - Drug–target interaction prediction through domain-tuned network-based inference
+AU  - Alaimo, Salvatore
+AU  - Pulvirenti, Alfredo
+AU  - Giugno, Rosalba
+AU  - Ferro, Alfredo
+Y1  - 2013/08/15
+N1  - 10.1093/bioinformatics/btt307
+JO  - Bioinformatics
+SP  - 2004
+EP  - 2008
+VL  - 29
+IS  - 16
+N2  - Motivation: The identification of drug–target interaction (DTI) represents a costly and time-consuming step in drug discovery and design. Computational methods capable of predicting reliable DTI play an important role in the field. Recently, recommendation methods relying on network-based inference (NBI) have been proposed. However, such approaches implement naive topology-based inference and do not take into account important features within the drug–target domain.Results: In this article, we present a new NBI method, called domain tuned-hybrid (DT-Hybrid), which extends a well-established recommendation technique by domain-based knowledge including drug and target similarity. DT-Hybrid has been extensively tested using the last version of an experimentally validated DTI database obtained from DrugBank. Comparison with other recently proposed NBI methods clearly shows that DT-Hybrid is capable of predicting more reliable DTIs.Availability: DT-Hybrid has been developed in R and it is available, along with all the results on the predictions, through an R package at the following URL: http://sites.google.com/site/ehybridalgo/.Contact:apulvirenti@dmi.unict.itSupplementary information:Supplementary data are available at Bioinformatics online.
+SN  - 1367-4803
+M3  - doi: 10.1093/bioinformatics/btt307
+UR  - http://dx.doi.org/10.1093/bioinformatics/btt307
+ER  - 
